@@ -1,0 +1,94 @@
+// Project identity.
+group 'com.github.andrew_k_21_12'
+version '1.0.0'
+
+
+
+// Required plugins.
+apply plugin: 'java'
+apply plugin: 'kotlin'
+apply plugin: 'idea'
+apply plugin: 'application'
+
+// Protobuf support.
+apply plugin: 'com.google.protobuf'
+
+// Gradle dependencies.
+buildscript {
+    ext.kotlin_version = '1.1.3-2'
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.1'
+    }
+}
+
+
+
+// Protobuf settings.
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.0.2'
+    }
+    //noinspection GroovyAssignabilityCheck
+    plugins {
+        grpc.artifact = 'io.grpc:protoc-gen-grpc-java:1.1.2'
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
+}
+compileKotlin.dependsOn ':generateProto' // we have to generate java classes from proto before compiling Kotlin sources
+
+
+
+// Resources locations.
+sourceSets {
+    main.resources {
+        srcDir 'src/main/resources'
+    }
+    main.java {
+        srcDirs += "$buildDir/generated/source/proto/main/java" // otherwise we won't be able to locate generated sources
+        srcDirs += "$buildDir/generated/source/proto/main/grpc"
+    }
+}
+
+// To prevent IDE from excluding build dir from sources.
+idea {
+    module {
+        excludeDirs -= buildDir
+    }
+}
+
+
+
+// An entry point.
+//noinspection GroovyUnusedAssignment
+mainClassName = 'com.github.andrew_k_21_12.tf_serving_client.MainKt'
+
+// Jar-packing description.
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.github.andrew_k_21_12.tf_serving_client.MainKt'
+    }
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+}
+
+
+
+// Repositories to search for dependencies.
+repositories {
+    jcenter()
+}
+
+// Dependencies for the project.
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile 'io.grpc:grpc-netty:1.1.2'
+    compile 'io.grpc:grpc-protobuf:1.1.2'
+    compile 'io.grpc:grpc-stub:1.1.2'
+}
