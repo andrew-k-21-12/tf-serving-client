@@ -112,7 +112,13 @@ fun main(args: Array<String>) {
                            "please check your connection or server's availability:\n" + e.toString())
         return
     }
-    val scores = response.getOutputsOrThrow(Configs.modelOutput).getFloatValList()
+    val scores: List<Float>
+    try {
+        scores = response.getOutputsOrThrow(Configs.modelOutput).getFloatValList()
+    } catch (e: Exception) {
+        System.err.println("No prediction scores are available for provided output name: " + Configs.modelOutput)
+        return
+    }
     val max = scores.max()
     val maxIndex = scores.indexOf(max)
     System.out.println(
